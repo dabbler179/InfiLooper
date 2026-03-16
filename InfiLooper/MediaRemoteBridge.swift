@@ -32,6 +32,24 @@ struct NowPlayingInfo: Sendable {
     var artworkURL: String = ""    // URL to album artwork
 }
 
+// MARK: - Media Source
+
+/// A media player app that InfiLooper can communicate with.
+struct MediaSource: Identifiable, Hashable, Sendable {
+    let id: String       // bundle identifier
+    let name: String     // display name (e.g. "Spotify")
+
+    /// Returns the app's actual icon from the system, or a fallback SF Symbol.
+    @MainActor
+    var appIcon: NSImage {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
+            return NSWorkspace.shared.icon(forFile: url.path)
+        }
+        return NSImage(systemSymbolName: "music.note", accessibilityDescription: name)
+            ?? NSImage()
+    }
+}
+
 // MARK: - Media Bridge
 
 /// Communicates with media player apps (Spotify, Apple Music) to get now-playing info
@@ -41,31 +59,47 @@ enum MediaBridge {
 
     // MARK: - Supported Apps
 
-    /// Apps we can query, in priority order.
-    nonisolated private static let supportedApps: [(name: String, bundleID: String)] = [
-        ("Spotify", "com.spotify.client"),
-        ("Music", "com.apple.Music"),
+    /// All apps InfiLooper knows how to talk to, in default priority order.
+    static let allSources: [MediaSource] = [
+        MediaSource(id: "com.apple.Music", name: "Music"),
+        MediaSource(id: "com.spotify.client", name: "Spotify"),
     ]
 
-    // MARK: - Query
+    // MARK: - Running App Detection
 
-    /// Fetch now-playing info from the first running supported media app.
-    nonisolated static func getNowPlayingInfo() async -> NowPlayingInfo {
-        for app in supportedApps {
-            if await MainActor.run(body: { isAppRunning(bundleID: app.bundleID) }) {
-                if let info = await queryApp(app.name) {
-                    return info
-                }
-            }
-        }
-        return NowPlayingInfo()
+    /// Returns the subset of `allSources` whose apps are currently running.
+    @MainActor
+    static func runningSources() -> [MediaSource] {
+        allSources.filter { isAppRunning(bundleID: $0.id) }
     }
 
     /// Check whether a given app is running.
+    @MainActor
     private static func isAppRunning(bundleID: String) -> Bool {
         NSRunningApplication.runningApplications(
             withBundleIdentifier: bundleID
         ).first?.isTerminated == false
+    }
+
+    // MARK: - Query
+
+    /// Fetch now-playing info from a specific media source.
+    nonisolated static func getNowPlayingInfo(for source: MediaSource) async -> NowPlayingInfo {
+        if let info = await queryApp(source.name) {
+            return info
+        }
+        return NowPlayingInfo()
+    }
+
+    /// Fetch now-playing info from the first running supported media app (legacy convenience).
+    nonisolated static func getNowPlayingInfo() async -> NowPlayingInfo {
+        let running = await MainActor.run { runningSources() }
+        for source in running {
+            if let info = await queryApp(source.name) {
+                return info
+            }
+        }
+        return NowPlayingInfo()
     }
 
     /// Query a specific app for its now-playing info.

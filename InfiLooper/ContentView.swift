@@ -8,44 +8,111 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var controller = NowPlayingController()
+    @Bindable var controller: NowPlayingController
+    @State private var showingHelp = false
 
     var body: some View {
         VStack(spacing: 12) {
-            // Track info
-            trackInfoSection
-
-            if !controller.title.isEmpty && controller.duration <= 0 {
-                streamingWarning
-            } else if controller.duration > 0 {
-                // Seek bar with loop range overlay
-                seekBarSection
-
-                // Time labels
-                timeLabelsSection
-
-                // Loop controls
-                loopControlsSection
+            if showingHelp {
+                helpSection
             } else {
-                noMediaSection
-            }
+                // Source selector — only visible when multiple media apps are running
+                if controller.runningSources.count > 1 {
+                    sourceSelector
+                }
 
-            // Media controls
-            mediaControlsSection
+                // Track info
+                trackInfoSection
+
+                if !controller.title.isEmpty && controller.duration <= 0 {
+                    streamingWarning
+                } else if controller.duration > 0 {
+                    // Seek bar with loop range overlay
+                    seekBarSection
+
+                    // Time labels
+                    timeLabelsSection
+
+                    // Loop controls
+                    loopControlsSection
+                } else {
+                    noMediaSection
+                }
+
+                // Media controls
+                mediaControlsSection
+            }
 
             Divider()
 
-            // Quit button
-            Button("Quit InfiLooper") {
-                NSApplication.shared.terminate(nil)
+            // Footer: help button + quit button
+            HStack {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showingHelp.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: showingHelp ? "xmark.circle" : "questionmark.circle")
+                        Text(showingHelp ? "Close" : "Help")
+                    }
+                    .font(.caption)
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .accessibilityLabel(showingHelp ? "Close help" : "Show help")
+
+                Spacer()
+
+                Button("Quit InfiLooper") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .keyboardShortcut("q")
             }
-            .buttonStyle(.borderless)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .keyboardShortcut("q")
         }
         .padding(16)
         .frame(width: 320)
+    }
+
+    // MARK: - Source Selector
+
+    private var sourceSelector: some View {
+        HStack(spacing: 4) {
+            Text("Looping from")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Menu {
+                ForEach(controller.runningSources) { source in
+                    Button {
+                        controller.selectSource(source)
+                    } label: {
+                        Label {
+                            Text(source.name)
+                        } icon: {
+                            Image(nsImage: source.appIcon)
+                        }
+                    }
+                }
+            } label: {
+                if let active = controller.activeSource {
+                    HStack(spacing: 4) {
+                        Image(nsImage: active.appIcon)
+                            .resizable()
+                            .frame(width: 14, height: 14)
+                        Text(active.name)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                }
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .accessibilityLabel("Choose which media player to loop")
+        }
     }
 
     // MARK: - Track Info
@@ -241,6 +308,66 @@ struct ContentView: View {
             .foregroundStyle(.secondary)
             .padding(.vertical, 8)
     }
+
+    // MARK: - Help
+
+    private var helpSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("How to Use InfiLooper")
+                .font(.headline)
+
+            helpItem(
+                icon: "play.circle",
+                title: "Play a track",
+                detail: "Open Spotify or Apple Music and play a song. InfiLooper detects it automatically."
+            )
+
+            helpItem(
+                icon: "repeat",
+                title: "Set a loop",
+                detail: "Tap Loop to enable looping. Drag the green handle to set the start and the red handle to set the end."
+            )
+
+            helpItem(
+                icon: "slider.horizontal.below.rectangle",
+                title: "Seek",
+                detail: "Tap anywhere on the progress bar to jump to that point in the track."
+            )
+
+            helpItem(
+                icon: "backward.end.fill",
+                title: "Restart",
+                detail: "Tap the restart button to jump back to the loop start, or to the beginning if looping is off."
+            )
+
+            helpItem(
+                icon: "antenna.radiowaves.left.and.right",
+                title: "Streaming",
+                detail: "Live radio and streams without a fixed duration cannot be looped."
+            )
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func helpItem(icon: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: icon)
+                .font(.callout)
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 18, alignment: .center)
+                .padding(.top, 1)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                Text(detail)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
 }
 
 // MARK: - Loop Range Slider
@@ -361,6 +488,6 @@ struct LoopRangeSlider: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(controller: NowPlayingController())
         .frame(width: 320, height: 250)
 }

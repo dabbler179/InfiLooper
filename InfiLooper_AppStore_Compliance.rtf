@@ -1,0 +1,275 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2580
+{\fonttbl\f0\fswiss\fcharset0 Helvetica-Bold;\f1\fswiss\fcharset0 Helvetica;\f2\fmodern\fcharset0 Menlo-Regular;\f3\fswiss\fcharset0 Helvetica-Oblique;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green102\blue204;\red200\green50\blue50;\red34\green139\blue34;\red100\green100\blue100;\red255\green149\blue0;}
+\paperw12240\paperh15840\margl1440\margr1440\margt1440\margb1440
+\vieww12000\viewh15840
+
+\pard\tx560\pardeftab560\qc
+\f0\fs48 \cf2 InfiLooper \uc0\u8212  App Store Compliance Review
+\f1\fs20 \cf6 
+\pard\tx560\pardeftab560\qc
+\f3\fs22 \cf6 Prepared March 16, 2026\par\par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf6 \uc0\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\u9472\par\par
+
+\pard\tx560\pardeftab560
+\f0\fs34 \cf2 What's Already Compliant\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Sandboxing (2.4.5i) \u8212? App Sandbox enabled with scoped scripting-targets\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Entitlements \u8212? Correctly configured for Apple Events, network client, Spotify/Music access groups\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Packaging (2.4.5ii) \u8212? Self-contained Xcode-built single app bundle\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  No auto-launch (2.4.5iii) \u8212? No login items or background processes after quit\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  No code downloads (2.4.5iv) \u8212? No dynamic code loading\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  No root escalation (2.4.5v) \u8212? No privilege elevation or license keys\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Public APIs only (2.5.1) \u8212? Uses NSAppleScript, SwiftUI, AppKit (all public)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  LSUIElement (2.4.5iii) \u8212? No Dock icon, no desktop shortcuts\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Self-contained bundle (2.5.2) \u8212? No external code or resources\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Accessibility (5.1) \u8212? VoiceOver labels on all interactive controls\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  NSAppleEventsUsageDescription \u8212? Usage description string set in Info.plist\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Built with macOS 26 SDK \u8212? Xcode 26.3, compliant with April 2026 deadline\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs34 \cf2 What Still Needs to Be Done\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 1. App Icon (Required \u8212? Currently Missing)\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 The Assets.xcassets is empty. A proper app icon is required for submission.\par\par
+
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  1024x1024 px app icon (PNG, sRGB or Display P3, no transparency)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  macOS also needs sizes: 16, 32, 64, 128, 256, 512, 1024 (1x and 2x variants)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Xcode 26's Icon Composer tool can generate all sizes from a single 1024px source\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Icon must be appropriate for a 4+ age rating (Guideline 2.3h)\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 2. App Store Connect Metadata\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 The following fields must be provided in App Store Connect:\par\par
+
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  App Name:\f1   Max 30 characters. "InfiLooper" is fine.\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  Subtitle:\f1   Short description, e.g. "Loop Any Section of a Song"\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  Description:\f1   What the app does, how looping works, supported players\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  Keywords:\f1   Accurate terms only \u8212? no competitor names or unrelated terms (2.3g)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  Category:\f1   Music or Utilities (see Apple's category definitions)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  Age Rating:\f1   Answer the questionnaire honestly \u8212? this app is likely 4+\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  Support URL:\f1   Working link to a support page or contact method (1.5)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  Privacy Policy URL:\f1   Required \u8212? linked in App Store Connect AND accessible within the app (5.1.1)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  What's New:\f1   Describe features for v1.0\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  Copyright:\f1   e.g. "2026 Omkar Kolangade"\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 3. Screenshots (Required)\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  At least 1 screenshot, up to 10, minimum 1280x800 px\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Must show the actual macOS UI \u8212? not mockups or title art (Guideline 2.3c)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Show the app in use: menu bar popover with a track playing, loop engaged, etc.\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  PNG or JPEG, RGB, no transparency, max 10MB each\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 4. Privacy Policy (Required \u8212? Guideline 5.1.1)\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 InfiLooper must have a privacy policy. Since the app collects no user data, the policy is straightforward. Create a page (e.g. GitHub Pages) that states:\par\par
+
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  InfiLooper does not collect, store, or transmit any personal data\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  No analytics or tracking SDKs are used\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Network access is used solely to load album artwork images\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  No data is shared with third parties\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 Link it in App Store Connect AND make it accessible from within the app (add a link in the popover or an About section).\par\par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 5. Privacy Nutrition Labels (Required)\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 In App Store Connect, fill out the App Privacy section. Since InfiLooper collects no data, select "Data Not Collected" \u8212? but this must still be explicitly declared.\par\par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 6. Accessibility Nutrition Labels (New in 2026)\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 Apple now shows Accessibility Nutrition Labels on product pages. In App Store Connect, declare which accessibility features your app supports. InfiLooper has VoiceOver labels, so indicate VoiceOver support. If not filled out, the section shows "Not indicated."\par\par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 7. In-App Privacy Policy Access (Guideline 5.1.1)\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 The privacy policy must also be accessible from within the app itself. Currently the popover has no link or about section. Add either:\par\par
+
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  A small "About" or info button in the popover that links to the privacy policy\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  A simple text link at the bottom of the popover\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 8. Build Settings to Update\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 Two build settings are currently empty and should be set:\par\par
+
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  LSApplicationCategoryType:\f1   Set to "public.app-category.music" or "public.app-category.utilities"\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f0\fs22 \cf2 \uc0\u8226  NSHumanReadableCopyright:\f1   Set to "Copyright \u169? 2026 Omkar Kolangade. All rights reserved."\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 9. Review Notes (At Submission)\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 When submitting to App Review, include detailed Notes for Review:\par\par
+
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Explain the app is a menu bar widget (no Dock icon)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Explain it requires Spotify or Apple Music to be running\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Note the Apple Events permission prompt that appears on first use\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Suggest the reviewer have Spotify or Music playing a track to test\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs34 \cf2 Potential Rejection Risks\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 Risk: Minimum Functionality (Guideline 4.2)\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 The app is a single-purpose menu bar widget. Apple sometimes rejects simple utilities. Mitigations:\par\par
+
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Ensure the App Store description clearly explains the use case (musicians practicing sections)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf2 \uc0\u8226  Screenshots showing the full workflow help demonstrate value\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 Risk: Controlling Third-Party Apps via Apple Events\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 This is explicitly supported by Apple's sandbox model via scripting-targets. You're using the documented approach correctly. The NSAppleEventsUsageDescription provides the required consent prompt. No issues expected.\par\par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs26 \cf2 Risk: No Artwork for Apple Music\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 Apple Music's AppleScript doesn't expose artwork URLs. This isn't a compliance issue, but note it in the description so reviewers don't think it's a bug.\par\par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f0\fs34 \cf2 Summary Checklist\par
+\f1\fs22 \cf2 \par
+
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf4 \uc0\u9744  App icon (1024x1024 + all macOS sizes)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf4 \uc0\u9744  Privacy policy (hosted URL)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf4 \uc0\u9744  In-app privacy policy link\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf4 \uc0\u9744  App Store screenshots (min 1280x800)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf4 \uc0\u9744  App Store Connect metadata (description, keywords, subtitle, support URL)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf4 \uc0\u9744  Privacy nutrition label declaration in App Store Connect\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf4 \uc0\u9744  Accessibility nutrition label declaration in App Store Connect\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf4 \uc0\u9744  LSApplicationCategoryType in build settings\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf4 \uc0\u9744  NSHumanReadableCopyright in build settings\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf4 \uc0\u9744  Review notes explaining menu bar behavior + Apple Events\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Sandboxing\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Entitlements (scripting-targets, network.client, automation.apple-events)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  NSAppleEventsUsageDescription\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Built with macOS 26 SDK (Xcode 26.3)\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Public APIs only\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Accessibility labels on all controls\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  Self-contained single app bundle\par
+\pard\tx560\li360\fi-360\pardeftab560
+\f1\fs22 \cf5 \uc0\u9745  No auto-launch, no background processes\par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 \par
+\pard\tx560\pardeftab560
+\f1\fs22 \cf2 Items marked with an empty checkbox are blockers or required actions. Items 1\u8211?4 (icon, privacy policy, in-app privacy link, screenshots) are hard blockers \u8212? submission will fail without them.\par\par
+
+}

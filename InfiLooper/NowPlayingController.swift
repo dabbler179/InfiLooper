@@ -10,6 +10,7 @@ import Observation
 
 /// Manages polling of now-playing state from the active media app
 /// and handles the looping logic between two user-set timestamps.
+/// Supports multiple simultaneous media player apps with focus management.
 @Observable
 @MainActor
 final class NowPlayingController {
@@ -22,6 +23,14 @@ final class NowPlayingController {
     var isPlaying: Bool = false
     var playerApp: String = ""
     var artworkURL: String = ""
+
+    // MARK: - Multi-Source State
+
+    /// Media player apps currently running on the system.
+    var runningSources: [MediaSource] = []
+
+    /// The source InfiLooper is currently focused on. Nil when no media apps are running.
+    var activeSource: MediaSource? = nil
 
     // MARK: - Loop Range (in seconds)
     var loopStart: Double = 0 {
@@ -44,10 +53,21 @@ final class NowPlayingController {
     private var pollTimer: Timer?
     private var loopCheckTimer: Timer?
     private var isFetching = false
+    /// Tracks which sources were running on the previous poll cycle, for detecting launches/quits.
+    private var previousRunningIDs: Set<String> = []
 
     init() {
         MediaBridge.warmup()
         startPolling()
+    }
+
+    /// Switch focus to a specific source. Resets loop state since we're changing apps.
+    func selectSource(_ source: MediaSource) {
+        guard source != activeSource else { return }
+        activeSource = source
+        resetTrackState()
+        // Immediately fetch info from the new source
+        fetchNowPlayingInfo()
     }
 
     func stopPolling() {
@@ -84,7 +104,25 @@ final class NowPlayingController {
         isFetching = true
 
         Task {
-            let info = await MediaBridge.getNowPlayingInfo()
+            // Detect which apps are running
+            let running = MediaBridge.runningSources()
+            let runningIDs = Set(running.map(\.id))
+
+            self.runningSources = running
+
+            // --- Focus management ---
+            updateFocus(running: running, runningIDs: runningIDs)
+
+            self.previousRunningIDs = runningIDs
+
+            // Fetch info from the active source
+            guard let source = self.activeSource else {
+                clearTrackState()
+                self.isFetching = false
+                return
+            }
+
+            let info = await MediaBridge.getNowPlayingInfo(for: source)
 
             // Track changed — reset loop
             if info.title != self.title || info.artist != self.artist {
@@ -103,6 +141,57 @@ final class NowPlayingController {
             self.artworkURL = info.artworkURL
             self.isFetching = false
         }
+    }
+
+    /// Determines which source should have focus based on running apps and current state.
+    private func updateFocus(running: [MediaSource], runningIDs: Set<String>) {
+        // If the active source just quit, we must switch away
+        if let current = activeSource, !runningIDs.contains(current.id) {
+            isLooping = false
+            // Fall back to the first remaining running source, or nil
+            activeSource = running.first
+            resetTrackState()
+            return
+        }
+
+        // If we have no active source, pick the first running one
+        if activeSource == nil {
+            activeSource = running.first
+            return
+        }
+
+        // If actively looping, never auto-switch — user is working with this source
+        if isLooping {
+            return
+        }
+
+        // Detect newly launched apps (present now but not on previous poll)
+        let newlyLaunched = running.filter { !previousRunningIDs.contains($0.id) }
+        if let newApp = newlyLaunched.first {
+            // A new media app just started — switch focus to it (since we're not looping)
+            activeSource = newApp
+            resetTrackState()
+        }
+    }
+
+    /// Clear now-playing fields without touching loop state.
+    private func clearTrackState() {
+        title = ""
+        artist = ""
+        album = ""
+        duration = 0
+        elapsedTime = 0
+        isPlaying = false
+        playerApp = ""
+        artworkURL = ""
+    }
+
+    /// Reset loop state and clear track info (used when switching sources).
+    private func resetTrackState() {
+        isLooping = false
+        loopStart = 0
+        loopEnd = 0
+        clearTrackState()
     }
 
     /// Locally interpolate elapsed time between polls for smoother UI.

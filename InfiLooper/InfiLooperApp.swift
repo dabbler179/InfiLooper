@@ -9,10 +9,36 @@ import SwiftUI
 
 @main
 struct InfiLooperApp: App {
+    @State private var controller = NowPlayingController()
+
     var body: some Scene {
-        MenuBarExtra("InfiLooper", systemImage: "repeat.circle") {
-            ContentView()
+        MenuBarExtra {
+            ContentView(controller: controller)
+        } label: {
+            Image(nsImage: menuBarIcon(looping: controller.isLooping))
+                .accessibilityLabel("InfiLooper")
         }
         .menuBarExtraStyle(.window)
+    }
+
+    /// Renders the menu bar icon, tinted orange when looping is active.
+    private func menuBarIcon(looping: Bool) -> NSImage {
+        let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .regular)
+        let image = NSImage(systemSymbolName: "repeat.circle", accessibilityDescription: "InfiLooper")!
+            .withSymbolConfiguration(config)!
+
+        if looping {
+            let tinted = NSImage(size: image.size, flipped: false) { rect in
+                image.draw(in: rect)
+                NSColor.orange.set()
+                rect.fill(using: .sourceAtop)
+                return true
+            }
+            tinted.isTemplate = false
+            return tinted
+        } else {
+            image.isTemplate = true
+            return image
+        }
     }
 }
