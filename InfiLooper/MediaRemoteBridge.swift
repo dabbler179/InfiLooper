@@ -12,7 +12,7 @@ import AppKit
 
 /// Info about the currently playing media from an external app.
 struct NowPlayingInfo: Sendable {
-    nonisolated init(title: String = "", artist: String = "", album: String = "", duration: Double = 0, elapsed: Double = 0, isPlaying: Bool = false, playerApp: String = "", artworkURL: String = "") {
+    nonisolated init(title: String = "", artist: String = "", album: String = "", duration: Double = 0, elapsed: Double = 0, isPlaying: Bool = false, playerApp: String = "", artworkURL: String = "", volume: Int = 100) {
         self.title = title
         self.artist = artist
         self.album = album
@@ -21,6 +21,7 @@ struct NowPlayingInfo: Sendable {
         self.isPlaying = isPlaying
         self.playerApp = playerApp
         self.artworkURL = artworkURL
+        self.volume = volume
     }
     var title: String = ""
     var artist: String = ""
@@ -30,6 +31,7 @@ struct NowPlayingInfo: Sendable {
     var isPlaying: Bool = false
     var playerApp: String = ""     // e.g. "Spotify", "Music"
     var artworkURL: String = ""    // URL to album artwork
+    var volume: Int = 100          // 0–100
 }
 
 // MARK: - Media Source
@@ -117,7 +119,8 @@ enum MediaBridge {
                     set trackPosition to player position
                     set pState to player state
                     set artURL to artwork url of current track
-                    return trackName & "\n" & trackArtist & "\n" & trackAlbum & "\n" & (trackDuration as text) & "\n" & (trackPosition as text) & "\n" & (pState as text) & "\n" & artURL
+                    set vol to sound volume
+                    return trackName & "\n" & trackArtist & "\n" & trackAlbum & "\n" & (trackDuration as text) & "\n" & (trackPosition as text) & "\n" & (pState as text) & "\n" & artURL & "\n" & (vol as text)
                 else
                     return ""
                 end if
@@ -133,7 +136,8 @@ enum MediaBridge {
                     set trackDuration to duration of current track
                     set trackPosition to player position
                     set pState to player state as text
-                    return trackName & "\n" & trackArtist & "\n" & trackAlbum & "\n" & (trackDuration as text) & "\n" & (trackPosition as text) & "\n" & pState & "\n"
+                    set vol to sound volume
+                    return trackName & "\n" & trackArtist & "\n" & trackAlbum & "\n" & (trackDuration as text) & "\n" & (trackPosition as text) & "\n" & pState & "\n" & "\n" & (vol as text)
                 else
                     return ""
                 end if
@@ -167,6 +171,7 @@ enum MediaBridge {
         let stateStr = lines[5].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let isPlaying = stateStr.contains("playing") || stateStr.contains("kpsp")
         let artworkURL = lines.count >= 7 ? lines[6].trimmingCharacters(in: .whitespacesAndNewlines) : ""
+        let volume = lines.count >= 8 ? Int(lines[7].trimmingCharacters(in: .whitespacesAndNewlines)) ?? 100 : 100
 
         return NowPlayingInfo(
             title: title,
@@ -176,7 +181,8 @@ enum MediaBridge {
             elapsed: elapsed,
             isPlaying: isPlaying,
             playerApp: appName,
-            artworkURL: artworkURL
+            artworkURL: artworkURL,
+            volume: volume
         )
     }
 
@@ -240,6 +246,18 @@ enum MediaBridge {
             await runCommand("tell application \"Spotify\" to set player position to \(position)")
         case "Music":
             await runCommand("tell application \"Music\" to set player position to \(position)")
+        default:
+            break
+        }
+    }
+
+    nonisolated static func setVolume(_ level: Int, app: String) async {
+        let clamped = max(0, min(100, level))
+        switch app {
+        case "Spotify":
+            await runCommand("tell application \"Spotify\" to set sound volume to \(clamped)")
+        case "Music":
+            await runCommand("tell application \"Music\" to set sound volume to \(clamped)")
         default:
             break
         }

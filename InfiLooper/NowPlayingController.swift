@@ -23,6 +23,7 @@ final class NowPlayingController {
     var isPlaying: Bool = false
     var playerApp: String = ""
     var artworkURL: String = ""
+    var volume: Int = 100
 
     // MARK: - Multi-Source State
 
@@ -55,6 +56,8 @@ final class NowPlayingController {
     private var isFetching = false
     /// Tracks which sources were running on the previous poll cycle, for detecting launches/quits.
     private var previousRunningIDs: Set<String> = []
+    /// When true, skip overwriting volume from polls (user is dragging the slider).
+    var isAdjustingVolume = false
 
     init() {
         MediaBridge.warmup()
@@ -122,10 +125,35 @@ final class NowPlayingController {
                 return
             }
 
-            let info = await MediaBridge.getNowPlayingInfo(for: source)
+            var info = await MediaBridge.getNowPlayingInfo(for: source)
+            var resolvedSource = source
+
+            // If active source stopped playing, not looping, and other apps are running,
+            // check if exactly one other source is playing and switch to it.
+            if !info.isPlaying && !self.isLooping && running.count > 1 {
+                let others = running.filter { $0 != source }
+                var playingSource: MediaSource?
+                for other in others {
+                    let otherInfo = await MediaBridge.getNowPlayingInfo(for: other)
+                    if otherInfo.isPlaying {
+                        if playingSource == nil {
+                            playingSource = other
+                            info = otherInfo
+                        } else {
+                            // Multiple others are playing — don't auto-switch
+                            playingSource = nil
+                            break
+                        }
+                    }
+                }
+                if let newSource = playingSource {
+                    resolvedSource = newSource
+                    self.activeSource = newSource
+                }
+            }
 
             // Track changed — reset loop
-            if info.title != self.title || info.artist != self.artist {
+            if info.title != self.title || info.artist != self.artist || resolvedSource != source {
                 self.isLooping = false
                 self.loopStart = 0
                 self.loopEnd = info.duration
@@ -139,6 +167,9 @@ final class NowPlayingController {
             self.isPlaying = info.isPlaying
             self.playerApp = info.playerApp
             self.artworkURL = info.artworkURL
+            if !self.isAdjustingVolume {
+                self.volume = info.volume
+            }
             self.isFetching = false
         }
     }
@@ -259,6 +290,14 @@ final class NowPlayingController {
             seekTo(loopStart)
         } else {
             seekTo(0)
+        }
+    }
+
+    func setVolume(_ level: Int) {
+        volume = level
+        let app = playerApp
+        Task.detached {
+            await MediaBridge.setVolume(level, app: app)
         }
     }
 

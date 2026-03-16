@@ -12,7 +12,7 @@ struct ContentView: View {
     @State private var showingHelp = false
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             if showingHelp {
                 helpSection
             } else {
@@ -33,14 +33,15 @@ struct ContentView: View {
                     // Time labels
                     timeLabelsSection
 
-                    // Loop controls
-                    loopControlsSection
+                    // Transport: media controls + loop button in one row
+                    transportSection
+
+                    // Volume
+                    volumeSection
+                        .padding(.top, 4)
                 } else {
                     noMediaSection
                 }
-
-                // Media controls
-                mediaControlsSection
             }
 
             Divider()
@@ -194,7 +195,7 @@ struct ContentView: View {
                 controller.seekTo(time)
             }
         )
-        .frame(height: 40)
+        .frame(height: 28)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Playback progress")
         .accessibilityValue(
@@ -232,10 +233,22 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Loop Controls
+    // MARK: - Transport (media controls + loop button)
 
-    private var loopControlsSection: some View {
-        HStack(spacing: 12) {
+    private var transportSection: some View {
+        HStack(spacing: 0) {
+            // Restart — left
+            Button {
+                controller.startOver()
+            } label: {
+                Image(systemName: "backward.end.fill")
+                    .font(.title3)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel(controller.isLooping ? "Go to loop start" : "Start over")
+
+            // Loop — center
             Button {
                 controller.toggleLoop()
             } label: {
@@ -244,40 +257,60 @@ struct ContentView: View {
                     Text(controller.isLooping ? "Looping" : "Loop")
                         .font(.caption)
                 }
-                .foregroundStyle(controller.isLooping ? .orange : .primary)
             }
             .buttonStyle(.bordered)
-            .tint(controller.isLooping ? .orange : nil)
+            .tint(.orange)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(Color.orange, lineWidth: controller.isLooping ? 1.5 : 0)
+            )
             .accessibilityLabel(controller.isLooping ? "Disable loop" : "Enable loop")
             .accessibilityHint("Loops playback between the selected start and end times")
-        }
-    }
 
-    // MARK: - Media Controls
-
-    private var mediaControlsSection: some View {
-        HStack(spacing: 20) {
-            // Restart / go to loop start
-            Button {
-                controller.startOver()
-            } label: {
-                Image(systemName: "backward.end.fill")
-                    .font(.title3)
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel(controller.isLooping ? "Go to loop start" : "Start over")
-
-            // Play / Pause
+            // Play / Pause — right
             Button {
                 controller.togglePlayPause()
             } label: {
                 Image(systemName: controller.isPlaying ? "pause.fill" : "play.fill")
                     .font(.title2)
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(controller.isPlaying ? "Pause" : "Play")
         }
-        .padding(.top, 4)
+    }
+
+    // MARK: - Volume
+
+    private var volumeSection: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "speaker.fill")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+
+            Slider(
+                value: Binding(
+                    get: { Double(controller.volume) },
+                    set: { newValue in
+                        controller.setVolume(Int(newValue))
+                    }
+                ),
+                in: 0...100
+            ) {
+                Text("Volume")
+            } onEditingChanged: { editing in
+                controller.isAdjustingVolume = editing
+            }
+            .controlSize(.mini)
+            .accessibilityLabel("Volume")
+            .accessibilityValue("\(controller.volume) percent")
+
+            Image(systemName: "speaker.wave.3.fill")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+        }
     }
 
     // MARK: - Streaming Warning
@@ -325,7 +358,7 @@ struct ContentView: View {
             helpItem(
                 icon: "repeat",
                 title: "Set a loop",
-                detail: "Tap Loop to enable looping. Drag the green handle to set the start and the red handle to set the end."
+                detail: "Tap Loop to enable looping. Drag the left handle to set the start and the right handle to set the end."
             )
 
             helpItem(
@@ -353,7 +386,7 @@ struct ContentView: View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: icon)
                 .font(.callout)
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(.orange)
                 .frame(width: 18, alignment: .center)
                 .padding(.top, 1)
 
@@ -403,7 +436,7 @@ struct LoopRangeSlider: View {
                 // Elapsed progress (seek bar)
                 let elapsedFraction = duration > 0 ? min(elapsed / duration, 1) : 0
                 Capsule()
-                    .fill(Color.accentColor.opacity(0.5))
+                    .fill(Color.orange.opacity(0.5))
                     .frame(width: max(0, width * elapsedFraction), height: trackHeight)
                     .position(x: width * elapsedFraction / 2, y: midY)
 
@@ -421,7 +454,7 @@ struct LoopRangeSlider: View {
 
                     // Start thumb
                     Circle()
-                        .fill(Color.green)
+                        .fill(Color.orange)
                         .frame(width: thumbSize, height: thumbSize)
                         .shadow(radius: 2)
                         .position(x: width * startFraction, y: midY)
@@ -444,7 +477,7 @@ struct LoopRangeSlider: View {
 
                     // End thumb
                     Circle()
-                        .fill(Color.red)
+                        .fill(Color.orange)
                         .frame(width: thumbSize, height: thumbSize)
                         .shadow(radius: 2)
                         .position(x: width * endFraction, y: midY)
