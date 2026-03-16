@@ -10,8 +10,9 @@ import SwiftUI
 @main
 struct InfiLooperApp: App {
     var body: some Scene {
-        WindowGroup {
+        MenuBarExtra("InfiLooper", systemImage: "repeat.circle") {
             ContentView()
         }
+        .menuBarExtraStyle(.window)
     }
 }
