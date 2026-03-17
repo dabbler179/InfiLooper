@@ -24,12 +24,13 @@ struct InfiLooperApp: App {
     /// Renders the menu bar icon, tinted orange when looping is active.
     private func menuBarIcon(looping: Bool) -> NSImage {
         let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .regular)
-        let image = NSImage(systemSymbolName: "repeat.circle", accessibilityDescription: "InfiLooper")!
+        let symbol = NSImage(systemSymbolName: "infinity", accessibilityDescription: "InfiLooper")!
             .withSymbolConfiguration(config)!
 
         if looping {
-            let tinted = NSImage(size: image.size, flipped: false) { rect in
-                image.draw(in: rect)
+            // Tint the symbol orange by drawing it and compositing color on top
+            let tinted = NSImage(size: symbol.size, flipped: false) { rect in
+                symbol.draw(in: rect)
                 NSColor.orange.set()
                 rect.fill(using: .sourceAtop)
                 return true
@@ -37,8 +38,8 @@ struct InfiLooperApp: App {
             tinted.isTemplate = false
             return tinted
         } else {
-            image.isTemplate = true
-            return image
+            symbol.isTemplate = true
+            return symbol
         }
     }
 }

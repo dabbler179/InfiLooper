@@ -298,6 +298,10 @@ enum MediaBridge {
         return script
     }
 
+    /// Whether Apple Events permission has been denied by the user.
+    /// When true, AppleScript commands will fail with -1743.
+    nonisolated(unsafe) static var permissionDenied = false
+
     /// Execute a script on the poll queue (for getNowPlayingInfo).
     @discardableResult
     nonisolated private static func runAppleScript(_ source: String) async -> String? {
@@ -306,6 +310,11 @@ enum MediaBridge {
                 let script = compiledScript(for: source)
                 var error: NSDictionary?
                 let descriptor = script?.executeAndReturnError(&error)
+                if let error = error,
+                   let errorNumber = error[NSAppleScript.errorNumber] as? Int,
+                   errorNumber == -1743 {
+                    permissionDenied = true
+                }
                 continuation.resume(returning: error == nil ? descriptor?.stringValue : nil)
             }
         }
@@ -319,6 +328,11 @@ enum MediaBridge {
                 let script = compiledScript(for: source)
                 var error: NSDictionary?
                 let descriptor = script?.executeAndReturnError(&error)
+                if let error = error,
+                   let errorNumber = error[NSAppleScript.errorNumber] as? Int,
+                   errorNumber == -1743 {
+                    permissionDenied = true
+                }
                 continuation.resume(returning: error == nil ? descriptor?.stringValue : nil)
             }
         }

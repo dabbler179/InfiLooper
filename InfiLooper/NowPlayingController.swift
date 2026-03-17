@@ -24,6 +24,8 @@ final class NowPlayingController {
     var playerApp: String = ""
     var artworkURL: String = ""
     var volume: Int = 100
+    /// True when Apple Events permission was denied — shows guidance in the UI.
+    var permissionDenied: Bool = false
 
     // MARK: - Multi-Source State
 
@@ -56,8 +58,12 @@ final class NowPlayingController {
     private var isFetching = false
     /// Tracks which sources were running on the previous poll cycle, for detecting launches/quits.
     private var previousRunningIDs: Set<String> = []
+    /// When true, the user explicitly chose a source — don't auto-switch away from it.
+    private var userSelectedSource = false
     /// When true, skip overwriting volume from polls (user is dragging the slider).
     var isAdjustingVolume = false
+    /// Remembers the last-known volume for each source so switching back restores it.
+    private var volumePerSource: [String: Int] = [:]
 
     init() {
         MediaBridge.warmup()
@@ -67,7 +73,16 @@ final class NowPlayingController {
     /// Switch focus to a specific source. Resets loop state since we're changing apps.
     func selectSource(_ source: MediaSource) {
         guard source != activeSource else { return }
+        // Save outgoing source's volume
+        if let outgoing = activeSource {
+            volumePerSource[outgoing.id] = volume
+        }
         activeSource = source
+        userSelectedSource = true
+        // Restore incoming source's volume if we have it
+        if let savedVolume = volumePerSource[source.id] {
+            volume = savedVolume
+        }
         resetTrackState()
         // Immediately fetch info from the new source
         fetchNowPlayingInfo()
@@ -128,9 +143,14 @@ final class NowPlayingController {
             var info = await MediaBridge.getNowPlayingInfo(for: source)
             var resolvedSource = source
 
-            // If active source stopped playing, not looping, and other apps are running,
-            // check if exactly one other source is playing and switch to it.
-            if !info.isPlaying && !self.isLooping && running.count > 1 {
+            // Clear the user-selected flag once that source starts playing
+            if self.userSelectedSource && info.isPlaying {
+                self.userSelectedSource = false
+            }
+
+            // If active source stopped playing, not looping, user hasn't explicitly chosen it,
+            // and other apps are running, check if exactly one other source is playing and switch to it.
+            if !info.isPlaying && !self.isLooping && !self.userSelectedSource && running.count > 1 {
                 let others = running.filter { $0 != source }
                 var playingSource: MediaSource?
                 for other in others {
@@ -147,8 +167,14 @@ final class NowPlayingController {
                     }
                 }
                 if let newSource = playingSource {
+                    // Save outgoing source's volume before auto-switching
+                    self.volumePerSource[source.id] = self.volume
                     resolvedSource = newSource
                     self.activeSource = newSource
+                    // Restore saved volume for the new source
+                    if let savedVolume = self.volumePerSource[newSource.id] {
+                        self.volume = savedVolume
+                    }
                 }
             }
 
@@ -170,6 +196,12 @@ final class NowPlayingController {
             if !self.isAdjustingVolume {
                 self.volume = info.volume
             }
+            // Keep per-source volume map up to date
+            if let src = self.activeSource {
+                self.volumePerSource[src.id] = self.volume
+            }
+            // Check if permission was denied
+            self.permissionDenied = MediaBridge.permissionDenied
             self.isFetching = false
         }
     }
@@ -178,9 +210,13 @@ final class NowPlayingController {
     private func updateFocus(running: [MediaSource], runningIDs: Set<String>) {
         // If the active source just quit, we must switch away
         if let current = activeSource, !runningIDs.contains(current.id) {
+            volumePerSource[current.id] = volume
             isLooping = false
             // Fall back to the first remaining running source, or nil
             activeSource = running.first
+            if let newSource = activeSource, let savedVolume = volumePerSource[newSource.id] {
+                volume = savedVolume
+            }
             resetTrackState()
             return
         }
@@ -236,7 +272,13 @@ final class NowPlayingController {
     private func checkLoopBoundary() {
         guard isLooping, isPlaying, duration > 0 else { return }
 
-        if elapsedTime >= loopEnd - 0.4 || elapsedTime < loopStart - 0.5 {
+        // Seek early enough to account for AppleScript command latency (~150-250ms).
+        // Triggering at loopEnd - 0.6 gives the seek command time to execute
+        // before playback actually reaches loopEnd, reducing the audible skip.
+        let seekThreshold = 0.6
+        let driftThreshold = 0.5
+
+        if elapsedTime >= loopEnd - seekThreshold || elapsedTime < loopStart - driftThreshold {
             elapsedTime = loopStart
             let start = loopStart
             let app = playerApp

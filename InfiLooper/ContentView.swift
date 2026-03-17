@@ -13,7 +13,9 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            if showingHelp {
+            if controller.permissionDenied {
+                permissionDeniedSection
+            } else if showingHelp {
                 helpSection
             } else {
                 // Source selector — only visible when multiple media apps are running
@@ -38,7 +40,7 @@ struct ContentView: View {
 
                     // Volume
                     volumeSection
-                        .padding(.top, 4)
+                        .padding(.vertical, 4)
                 } else {
                     noMediaSection
                 }
@@ -141,7 +143,18 @@ struct ContentView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .accessibilityLabel("Album artwork")
             } else if !controller.title.isEmpty {
-                artworkPlaceholder
+                // Apple Music doesn't expose artwork URLs via AppleScript —
+                // show the player's app icon instead of a generic placeholder.
+                if let source = controller.activeSource {
+                    Image(nsImage: source.appIcon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 48, height: 48)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .accessibilityLabel("\(source.name) icon")
+                } else {
+                    artworkPlaceholder
+                }
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -256,6 +269,7 @@ struct ContentView: View {
                     Image(systemName: "repeat")
                     Text(controller.isLooping ? "Looping" : "Loop")
                         .font(.caption)
+                        .frame(width: 46, alignment: .center)
                 }
             }
             .buttonStyle(.bordered)
@@ -311,6 +325,37 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
         }
+    }
+
+    // MARK: - Permission Denied
+
+    private var permissionDeniedSection: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "lock.shield")
+                .font(.largeTitle)
+                .foregroundStyle(.orange)
+                .accessibilityHidden(true)
+
+            Text("Automation Permission Required")
+                .font(.headline)
+
+            Text("InfiLooper needs permission to communicate with your music player. Please enable it in System Settings.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button("Open System Settings") {
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+            .buttonStyle(.bordered)
+            .tint(.orange)
+            .controlSize(.small)
+        }
+        .padding(.vertical, 8)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Automation permission required. Open System Settings to enable it.")
     }
 
     // MARK: - Streaming Warning
@@ -435,22 +480,37 @@ struct LoopRangeSlider: View {
 
                 // Elapsed progress (seek bar)
                 let elapsedFraction = duration > 0 ? min(elapsed / duration, 1) : 0
-                Capsule()
-                    .fill(Color.orange.opacity(0.5))
-                    .frame(width: max(0, width * elapsedFraction), height: trackHeight)
-                    .position(x: width * elapsedFraction / 2, y: midY)
+
+                if !isLooping {
+                    // When not looping, show orange from start to current position
+                    Capsule()
+                        .fill(Color.orange.opacity(0.5))
+                        .frame(width: max(0, width * elapsedFraction), height: trackHeight)
+                        .position(x: width * elapsedFraction / 2, y: midY)
+                }
 
                 if isLooping && duration > 0 {
-                    // Loop region highlight
+                    // Loop region background (full loop range, dimmer)
                     let startFraction = loopStart / duration
                     let endFraction = loopEnd / duration
                     let regionX = width * startFraction
                     let regionWidth = width * (endFraction - startFraction)
 
                     RoundedRectangle(cornerRadius: trackHeight / 2)
-                        .fill(Color.orange.opacity(0.35))
+                        .fill(Color.orange.opacity(0.2))
                         .frame(width: max(0, regionWidth), height: trackHeight)
                         .position(x: regionX + regionWidth / 2, y: midY)
+
+                    // Elapsed progress within loop region
+                    let clampedElapsed = min(max(elapsedFraction, startFraction), endFraction)
+                    let progressWidth = width * (clampedElapsed - startFraction)
+
+                    if progressWidth > 0 {
+                        RoundedRectangle(cornerRadius: trackHeight / 2)
+                            .fill(Color.orange.opacity(0.5))
+                            .frame(width: max(0, progressWidth), height: trackHeight)
+                            .position(x: regionX + progressWidth / 2, y: midY)
+                    }
 
                     // Start thumb
                     Circle()
